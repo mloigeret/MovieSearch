@@ -30,7 +30,7 @@ class HomeViewController: UITableViewController, HomeViewControllerProtocol {
     init(viewModel: HomeViewModelProtocol) {
         _viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        _viewModel.delegate = self
+        _viewModel.vcDelegate = self
     }
     
     required init?(coder: NSCoder) {
@@ -63,7 +63,7 @@ class HomeViewController: UITableViewController, HomeViewControllerProtocol {
     }
 }
 
-extension HomeViewController: HomeViewModelDelegate {
+extension HomeViewController: HomeViewModelVCDelegate {
     func didUpdate(movies: [MovieSearchResult]) {
         DispatchQueue.main.async {
             self._movieSearchResults = movies
@@ -110,5 +110,10 @@ extension HomeViewController {
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         _viewModel.willDisplayItem(at: indexPath.row)
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        _viewModel.didSelectItem(at: indexPath.row)
     }
 }

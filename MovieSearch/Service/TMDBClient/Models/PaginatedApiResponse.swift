@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SearchApiResponse<T: Decodable>: Decodable {
+struct PaginatedApiResponse<T: Decodable>: Decodable {
     let page: Int
     let results: [T]
 }

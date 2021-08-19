@@ -7,8 +7,28 @@
 
 import Foundation
 
-class TMDBAPIClient: GenericAPIClient {
+protocol TMDBAPIClientProtocol: GenericAPIClient {
+    func fetchMovies(searchText: String,
+                     page: Int,
+                     completion: @escaping (ApiResult<PaginatedApiResponse<MovieSearchResult>?, APIError>) -> ())
+    func fetchCredits(movieId: Int,
+                      completion: @escaping (ApiResult<MovieCreditsResult?, APIError>) -> ())
+    func fetchSimilarMovies(movieId: Int,
+                            page: Int,
+                            completion: @escaping (ApiResult<PaginatedApiResponse<MovieSearchResult>?, APIError>) -> ())
+}
+
+class TMDBAPIClient: TMDBAPIClientProtocol {
+    
+    private struct Constants {
+        static let defaulHeaders = [HTTPHeader.contentType("application/json")]
+    }
+    
     internal let session: URLSession
+    
+    static func instantiate() -> TMDBAPIClientProtocol {
+        return TMDBAPIClient()
+    }
     
     init(configuration: URLSessionConfiguration) {
         self.session = URLSession(configuration: configuration)
@@ -18,16 +38,43 @@ class TMDBAPIClient: GenericAPIClient {
         self.init(configuration: .default)
     }
     
-    func fetchMovies(searchText: String, page: Int, completion: @escaping (ApiResult<SearchApiResponse<MovieSearchResult>?, APIError>) -> ()) {
+    func fetchMovies(searchText: String,
+                     page: Int,
+                     completion: @escaping (ApiResult<PaginatedApiResponse<MovieSearchResult>?, APIError>) -> ()) {
         let parameters = MovieSearchURLParameters(query: searchText, page: page)
         
         guard let request = TMDBEndpoint.search.createRequest(urlParameters: parameters,
                                                               method: .get,
-                                                              headers: [HTTPHeader.contentType("application/json")]) else {
+                                                              headers: Constants.defaulHeaders) else {
             completion(.failure(.invalidRequest))
             return
         }
         
+        send(with: request, completion: completion)
+    }
+    
+    func fetchCredits(movieId: Int,
+                      completion: @escaping (ApiResult<MovieCreditsResult?, APIError>) -> ()) {
+        guard let request = TMDBEndpoint.credits(movieId: movieId).createRequest(urlParameters: MovieCreditsURLParameters(),
+                                                                                 method: .get,
+                                                                                 headers: Constants.defaulHeaders) else {
+            completion(.failure(.invalidRequest))
+            return
+        }
+        
+        send(with: request, completion: completion)
+    }
+    
+    func fetchSimilarMovies(movieId: Int,
+                            page: Int,
+                            completion: @escaping (ApiResult<PaginatedApiResponse<MovieSearchResult>?, APIError>) -> ()) {
+        let parameters = SimilarMoviesURLParameters(page: page)
+        guard let request = TMDBEndpoint.similars(movieId: movieId).createRequest(urlParameters: parameters,
+                                                                                  method: .get,
+                                                                                  headers: Constants.defaulHeaders) else {
+            completion(.failure(.invalidRequest))
+            return
+        }
         send(with: request, completion: completion)
     }
 }
