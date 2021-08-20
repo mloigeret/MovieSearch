@@ -8,14 +8,17 @@
 import Foundation
 
 enum APIError: Error {
+    case cancelled
     case invalidRequest
     case invalidData
     case responseUnsuccessful(description: String)
     case requestFailed(description: String)
     case jsonConversionFailure(description: String)
     case postParametersEncodingFalure(description: String)
+    
     var customDescription: String {
         switch self {
+        case .cancelled: return "API Error: Cancelled"
         case .invalidRequest: return "API Error: Invalid request"
         case .invalidData: return "API Error: Invalid Data"
         case .responseUnsuccessful(let description): return "APIError: Response Unsuccessful status code: \(description)"

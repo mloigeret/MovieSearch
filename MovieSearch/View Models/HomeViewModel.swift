@@ -59,7 +59,11 @@ class HomeViewModel: HomeViewModelProtocol {
         _tmdbClient.fetchMovies(searchText: text, page : _currentPage) { [weak self] result in
             switch result {
             case .failure(let error):
-                print("Failed wit error = \(error)")
+                if error.customDescription == APIError.cancelled.customDescription {
+                    return
+                }
+                print("Failed with error = \(error)")
+                
             case .success(let response):
                 if let results = response?.results {
                     self?._currentMovies.append(contentsOf: results)

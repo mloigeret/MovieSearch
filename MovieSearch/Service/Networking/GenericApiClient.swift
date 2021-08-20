@@ -9,13 +9,18 @@ import Foundation
 
 protocol GenericAPIClient {
     var session: URLSession { get }
-    func send<T: Decodable>(with request: URLRequest, completion: @escaping (ApiResult<T, APIError>) -> Void)
+    func send<T: Decodable>(with request: URLRequest, completion: @escaping (ApiResult<T, APIError>) -> Void) -> URLSessionDataTask
 }
 
 extension GenericAPIClient {
-    func send<T: Decodable>(with request: URLRequest, completion: @escaping (ApiResult<T, APIError>) -> Void) {
+    func send<T: Decodable>(with request: URLRequest, completion: @escaping (ApiResult<T, APIError>) -> Void) -> URLSessionDataTask {
         let task = session.dataTask(with: request) { data, response, error in
             guard let httpResponse = response as? HTTPURLResponse else {
+                if let err = error as NSError?,
+                   err.code == NSURLErrorCancelled {
+                    completion(.failure(.cancelled))
+                    return
+                }
                 completion(.failure(.requestFailed(description: error?.localizedDescription ?? "No description")))
                 return
             }
@@ -39,6 +44,7 @@ extension GenericAPIClient {
             }
         }
         task .resume()
+        return task
     }
 }
 
